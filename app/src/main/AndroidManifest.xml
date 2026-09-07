@@ -27,7 +27,7 @@
         <service
             android:name=".media.MediaAccessService"
             android:exported="true"
-            android:label="high5rotate media access"
+            android:label="High 5 Rotate media access"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />

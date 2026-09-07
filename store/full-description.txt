@@ -1,23 +1,23 @@
-Teach the class. Let high5rotate keep track of partner changes.
+Teach the class. Let High 5 Rotate keep track of partner changes.
 
-high5rotate is a partner rotation timer for West Coast Swing and other partner dance classes. Start a song in your usual Android music app, and high5rotate plans dance blocks around the song's remaining duration.
+High 5 Rotate is a partner rotation timer for West Coast Swing and other partner dance classes. Start a song in your usual Android music app, and High 5 Rotate plans dance blocks around the song's remaining duration.
 
 HOW IT WORKS
 • Arm the timer once for class.
 • Play songs in a compatible music app, such as YouTube Music or Spotify.
 • Hear a cue when it is time to change partners while the music plays quietly.
-• Let high5rotate request a pause near the end of the song, then choose the next song yourself.
+• Let High 5 Rotate request a pause near the end of the song, then choose the next song yourself.
 • Disarm when class is over.
 
 MAKE IT FIT YOUR CLASS
-Choose your target dance-block length, minimum and maximum block lengths, minimum final block, and switch time. Choose a built-in cue or your own audio file, or turn tones off while keeping the quiet switch interval. An optional final cue signals a partner change after the song.
+Choose your minimum and maximum dance-block lengths, minimum final block, and switch time. When several schedules fit, High 5 Rotate prefers blocks near the middle of your normal range. Choose a built-in cue or your own audio file, or turn tones off while keeping the quiet switch interval. An optional final cue signals a partner change after the song.
 
-The timer continues while you use another app or lock the screen. For reliable timing, allow high5rotate to run without battery optimization in your phone's settings.
+The timer continues while you use another app or lock the screen. The app shows your background activity status. If cues are delayed with the screen locked, its battery button takes you directly to this app's settings to allow unrestricted timing.
 
 MEDIA ACCESS AND PRIVACY
-Android calls the required permission “notification access.” high5rotate uses it to discover music players, read track timing, and request playback controls. It does not read notification message contents, collect a listening history, or send your information to the developer. No high5rotate account, ads, or analytics are included.
+Android calls the required permission “notification access.” High 5 Rotate uses it to discover music players, read track timing, and request playback controls. It does not read notification message contents, collect a listening history, or send your information to the developer. No High 5 Rotate account, ads, or analytics are included.
 
 COMPATIBILITY
-Android 8.0 or newer is required. The music player must expose an Android media session; playback controls and audio ducking depend on the player and device. When track duration is unavailable, high5rotate provides fixed-interval cues but cannot reliably stop before the next song. Adjust the end guard on your actual phone and Bluetooth speaker.
+Android 8.0 or newer is required. The music player must expose an Android media session; playback controls and audio ducking depend on the player and device. When track duration is unavailable, High 5 Rotate provides fixed-interval cues but cannot reliably stop before the next song. Adjust the end guard on your actual phone and Bluetooth speaker.
 
-high5rotate does not supply music and is not affiliated with the music services mentioned above. Any account or subscription required by your music player is separate.
+High 5 Rotate does not supply music and is not affiliated with the music services mentioned above. Any account or subscription required by your music player is separate.

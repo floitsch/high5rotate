@@ -1,0 +1,17 @@
+Getting started
+Grant media access, arm the timer, then play a song in your usual music app. Give your partner a high five at the cue and rotate counter-clockwise. The timer stays armed between songs; choose the next song yourself. Disarm when class is over.
+
+Dance blocks
+Shortest and longest normal block set the range of dance time between switches. Switch time is separate. When more than one schedule fits the song, the planner prefers blocks near the middle of that range: 55 seconds for a 45–65 second range. The shortest final block allows a shorter last dance. If no schedule fits, the app uses fewer, longer blocks to avoid an excessively short dance.
+
+Switch time and sounds
+Switch time is the quiet interval for high-fiving and finding the next partner. Music keeps playing during it. Choose a built-in tone or an audio file. A file plays once and stops by the end of the switch interval; unavailable files fall back to a beep. Preview sounds while disarmed. Turning tones off keeps the quiet interval. The optional final tone signals another partner rotation after the song.
+
+End guard
+This is how early to request a pause before the end of the song. With a 0.5-second guard, a 3:00 song is paused at about 2:59.5. The buffer gives the music player and Bluetooth connection time to react before the next track starts. Increase it if the next track starts briefly; decrease it if the ending is cut too early. Timing depends on the music player and speaker.
+
+Screen-off timing and battery
+The app checks Android's background restrictions and battery-optimization exemption whenever you return to it. “Background activity allowed” means there is no explicit background restriction, but normal battery optimization still applies. You can use the timer in this state. If cues are delayed while locked, open App battery settings and choose Unrestricted. “Background timing unrestricted” means the exemption is already enabled. “Background activity restricted” means Android is explicitly limiting this app. The button opens this app's battery page; on phones without a direct page it opens App info, where you can select Battery or App battery usage. Names vary by phone. This setup is optional and never blocks arming.
+
+Media access and player compatibility
+Android calls media-session access “notification access.” It lets High 5 Rotate read track timing and request pause; it does not read notification message contents. Your player must publish a compatible media session and honor playback controls. If duration is unavailable, cues use the midpoint of the normal block range, but the app cannot reliably stop before the next song.

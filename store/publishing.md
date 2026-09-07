@@ -1,4 +1,4 @@
-# Publishing high5rotate on Google Play
+# Publishing High 5 Rotate on Google Play
 
 This is a guided release checklist, not a record of a completed Play submission. Policy links were checked on 8 September 2026. Start with internal testing; production comes after testing on real phones and completing the Console requirements.
 
@@ -17,7 +17,7 @@ Still needed from the publisher:
 
 ## 2. Create the app entry
 
-In Play Console choose **Create app**, use **high5rotate**, English (United States), and **App**. Decide free/paid before proceeding. The Android package ID is `org.toitlang.wcsrotate`, retained so existing installations can be updated. Display name and repository name are `high5rotate`. The package ID becomes permanent for this Play app.
+In Play Console choose **Create app**, use **High 5 Rotate**, English (United States), and **App**. Decide free/paid before proceeding. The Android package ID is `org.toitlang.wcsrotate`, retained so existing installations can be updated. The display name is `High 5 Rotate`; the repository remains `floitsch/high5rotate`. The package ID becomes permanent for this Play app.
 
 The project targets Android 16 / API 36, meeting the currently documented target for new submissions. [Target API requirements](https://developer.android.com/google/play/requirements/target-sdk)
 
@@ -45,7 +45,7 @@ The artifact is `app/build/outputs/bundle/release/app-release.aab`. Before every
 
 ## 4. Complete the store listing
 
-Copy `title.txt`, `short-description.txt`, and `full-description.txt` from this directory. Proposed category: **Tools**. Upload `assets/icon.png` (512 × 512) and `assets/feature-graphic.png` (1024 × 500). The feature-graphic alt text is: “high5rotate: partner rotation cues for dance classes.”
+Copy `title.txt`, `short-description.txt`, and `full-description.txt` from this directory. Proposed category: **Tools**. Upload `assets/icon.png` (512 × 512) and `assets/feature-graphic.png` (1024 × 500). The feature-graphic alt text is: “High 5 Rotate: partner rotation cues for dance classes.”
 
 Capture at least two genuine phone screenshots from the final app, such as an active song countdown and the sound/timing controls. Prefer 1080 × 1920 portrait; don't substitute mockups for actual app screenshots. Use a track you have permission to show. Screenshots and the foreground-service video still need to be recorded on a working device. [Google's asset requirements](https://support.google.com/googleplay/android-developer/answer/9866151?hl=en)
 

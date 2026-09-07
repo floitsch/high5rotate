@@ -27,7 +27,7 @@ object RotationPlanner {
         val stop = stopPositionMs.coerceAtLeast(start)
         val available = (stop - start).toDouble()
         val cue = value.cueSeconds * 1_000.0
-        val target = value.targetSeconds * 1_000.0
+        val midpoint = value.midpointMillis.toDouble()
         val minimum = value.minimumSeconds * 1_000.0
         val maximum = value.maximumSeconds * 1_000.0
         val finalMinimum = value.finalMinimumSeconds * 1_000.0
@@ -53,7 +53,7 @@ object RotationPlanner {
                 List(blockCount - 1) { minimum } +
                     listOf(danceTime - (blockCount - 1) * minimum)
             }
-            val score = blocks.sumOf { (it - target).pow(2) } / blockCount
+            val score = blocks.sumOf { (it - midpoint).pow(2) } / blockCount
             Candidate(blocks, score)
         }
 

@@ -11,7 +11,6 @@ enum class SwitchTone(val label: String) {
 }
 
 data class RotationSettings(
-    val targetSeconds: Int = 50,
     val minimumSeconds: Int = 45,
     val maximumSeconds: Int = 65,
     val finalMinimumSeconds: Int = 35,
@@ -23,9 +22,10 @@ data class RotationSettings(
     val soundUri: String? = null,
     val soundName: String? = null,
 ) {
+    val midpointMillis: Long get() = (minimumSeconds.toLong() + maximumSeconds) * 500L
+
     fun hasSameTimingAs(other: RotationSettings): Boolean =
-        targetSeconds == other.targetSeconds &&
-            minimumSeconds == other.minimumSeconds &&
+        minimumSeconds == other.minimumSeconds &&
             maximumSeconds == other.maximumSeconds &&
             finalMinimumSeconds == other.finalMinimumSeconds &&
             cueSeconds == other.cueSeconds &&
@@ -34,9 +34,7 @@ data class RotationSettings(
     fun sanitized(): RotationSettings {
         val maximum = maximumSeconds.coerceIn(10, 180)
         val minimum = minimumSeconds.coerceIn(10, maximum)
-        val target = targetSeconds.coerceIn(minimum, maximum)
         return copy(
-            targetSeconds = target,
             minimumSeconds = minimum,
             maximumSeconds = maximum,
             finalMinimumSeconds = finalMinimumSeconds.coerceIn(5, minimum),
@@ -50,7 +48,6 @@ class RotationSettingsStore(context: Context) {
     private val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
 
     fun load(): RotationSettings = RotationSettings(
-        targetSeconds = preferences.getInt(TARGET, 50),
         minimumSeconds = preferences.getInt(MINIMUM, 45),
         maximumSeconds = preferences.getInt(MAXIMUM, 65),
         finalMinimumSeconds = preferences.getInt(FINAL_MINIMUM, 35),
@@ -68,7 +65,7 @@ class RotationSettingsStore(context: Context) {
     fun save(settings: RotationSettings) {
         val value = settings.sanitized()
         preferences.edit()
-            .putInt(TARGET, value.targetSeconds)
+            .remove("target_seconds") // Remove the obsolete setting from older installations.
             .putInt(MINIMUM, value.minimumSeconds)
             .putInt(MAXIMUM, value.maximumSeconds)
             .putInt(FINAL_MINIMUM, value.finalMinimumSeconds)
@@ -90,7 +87,6 @@ class RotationSettingsStore(context: Context) {
 
     private companion object {
         const val PREFERENCES = "rotation"
-        const val TARGET = "target_seconds"
         const val MINIMUM = "minimum_seconds"
         const val MAXIMUM = "maximum_seconds"
         const val FINAL_MINIMUM = "final_minimum_seconds"

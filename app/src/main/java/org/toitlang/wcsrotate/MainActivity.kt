@@ -9,9 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.provider.OpenableColumns
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -66,6 +64,8 @@ import org.toitlang.wcsrotate.model.RotationSettingsStore
 import org.toitlang.wcsrotate.model.RotationStateStore
 import org.toitlang.wcsrotate.model.RotationUiState
 import org.toitlang.wcsrotate.model.SwitchTone
+import org.toitlang.wcsrotate.power.BatteryAccess
+import org.toitlang.wcsrotate.power.BatteryStatus
 import org.toitlang.wcsrotate.rotation.CuePlayer
 import org.toitlang.wcsrotate.rotation.RotationService
 import org.toitlang.wcsrotate.ui.WcsRotateTheme
@@ -74,7 +74,7 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
     private lateinit var settingsStore: RotationSettingsStore
     private val mediaAccessGranted = mutableStateOf(false)
-    private val batteryOptimizationExempt = mutableStateOf(false)
+    private val batteryStatus = mutableStateOf(BatteryStatus.OPTIMIZED)
     private lateinit var previewPlayer: CuePlayer
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -138,10 +138,12 @@ class MainActivity : ComponentActivity() {
                     state = state,
                     settings = settings,
                     mediaAccessGranted = mediaAccessGranted.value,
-                    batteryOptimizationExempt = batteryOptimizationExempt.value,
+                    batteryStatus = batteryStatus.value,
                     onGrantMediaAccess = { startActivity(MediaAccess.settingsIntent(this)) },
                     onBatterySettings = {
-                        startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                        if (!BatteryAccess.openSettings(this)) {
+                            Toast.makeText(this, "Unable to open app settings on this phone.", Toast.LENGTH_LONG).show()
+                        }
                     },
                     onSettingsChanged = saveSettings,
                     onChooseAudioFile = { audioFilePicker.launch(arrayOf("audio/*")) },
@@ -175,8 +177,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         mediaAccessGranted.value = MediaAccess.isGranted(this)
-        batteryOptimizationExempt.value = getSystemService(PowerManager::class.java)
-            .isIgnoringBatteryOptimizations(packageName)
+        batteryStatus.value = BatteryAccess.status(this)
         RotationService.refreshIfArmed(this)
     }
 
@@ -197,7 +198,7 @@ private fun MainScreen(
     state: RotationUiState,
     settings: RotationSettings,
     mediaAccessGranted: Boolean,
-    batteryOptimizationExempt: Boolean,
+    batteryStatus: BatteryStatus,
     onGrantMediaAccess: () -> Unit,
     onBatterySettings: () -> Unit,
     onSettingsChanged: (RotationSettings) -> Unit,
@@ -216,11 +217,19 @@ private fun MainScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = "high5rotate",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "High 5 Rotate",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+                HelpButton()
+            }
             Text(
                 text = "Arm once for class. Start songs in your usual music app.",
                 style = MaterialTheme.typography.bodyLarge,
@@ -229,9 +238,6 @@ private fun MainScreen(
 
             if (!mediaAccessGranted) {
                 PermissionCard(onGrantMediaAccess)
-            }
-            if (!batteryOptimizationExempt) {
-                BatterySettingsCard(onBatterySettings)
             }
 
             StatusCard(state)
@@ -257,6 +263,7 @@ private fun MainScreen(
                 )
             }
 
+            BatterySettingsCard(batteryStatus, onBatterySettings)
             TimingSettingsCard(settings, onSettingsChanged)
             SoundSettingsCard(
                 settings = settings,
@@ -278,6 +285,26 @@ private fun MainScreen(
 }
 
 @Composable
+private fun HelpButton() {
+    val context = LocalContext.current
+    var showHelp by remember { mutableStateOf(false) }
+    val help = remember {
+        context.resources.openRawResource(R.raw.help).bufferedReader().use { it.readText() }
+    }
+    TextButton(onClick = { showHelp = true }) { Text("Help") }
+    if (showHelp) {
+        AlertDialog(
+            onDismissRequest = { showHelp = false },
+            title = { Text("Using High 5 Rotate") },
+            text = { Text(help, modifier = Modifier.verticalScroll(rememberScrollState())) },
+            confirmButton = {
+                TextButton(onClick = { showHelp = false }) { Text("Got it") }
+            },
+        )
+    }
+}
+
+@Composable
 private fun PrivacyButton() {
     val context = LocalContext.current
     var showPrivacy by remember { mutableStateOf(false) }
@@ -285,7 +312,7 @@ private fun PrivacyButton() {
         context.resources.openRawResource(R.raw.privacy_policy).bufferedReader().use { it.readText() }
     }
     TextButton(onClick = { showPrivacy = true }, modifier = Modifier.fillMaxWidth()) {
-        Text("Privacy · high5rotate ${BuildConfig.VERSION_NAME}")
+        Text("Privacy · High 5 Rotate ${BuildConfig.VERSION_NAME}")
     }
     if (showPrivacy) {
         AlertDialog(
@@ -311,7 +338,7 @@ private fun PermissionCard(onGrant: () -> Unit) {
         ) {
             Text("One-time setup", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(
-                "Android calls this notification access. It lets high5rotate see the active song, its position, and its pause control. No notification data is saved or sent anywhere.",
+                "Android calls this notification access. It lets High 5 Rotate see the active song, its position, and its pause control. No notification data is saved or sent anywhere.",
             )
             FilledTonalButton(onClick = onGrant, modifier = Modifier.fillMaxWidth()) {
                 Text("Grant media access")
@@ -321,20 +348,35 @@ private fun PermissionCard(onGrant: () -> Unit) {
 }
 
 @Composable
-private fun BatterySettingsCard(onOpenSettings: () -> Unit) {
-    Card(shape = RoundedCornerShape(20.dp)) {
+private fun BatterySettingsCard(status: BatteryStatus, onOpenSettings: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("Timing with the screen locked", style = MaterialTheme.typography.titleMedium)
             Text(
-                "For reliable cues during class, allow high5rotate to run without battery " +
-                    "optimization. In battery settings, select All apps, find high5rotate, " +
-                    "and choose Don't optimize. The wording varies by phone.",
+                when (status) {
+                    BatteryStatus.UNRESTRICTED -> "Background timing unrestricted"
+                    BatteryStatus.OPTIMIZED -> "Background activity allowed"
+                    BatteryStatus.RESTRICTED -> "Background activity restricted"
+                },
+                style = MaterialTheme.typography.titleMedium,
             )
-            FilledTonalButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
-                Text("Battery settings")
+            Text(
+                when (status) {
+                    BatteryStatus.UNRESTRICTED -> "Battery optimization is off for High 5 Rotate. No setup needed."
+                    BatteryStatus.OPTIMIZED -> "Battery optimization is on. You can use the timer as it is. " +
+                        "If cues are delayed with the screen locked, open this app's battery settings " +
+                        "and choose Unrestricted."
+                    BatteryStatus.RESTRICTED -> "Android is restricting this app in the background. " +
+                        "Open this app's battery settings and allow background usage for screen-off timing."
+                },
+                style = MaterialTheme.typography.bodySmall,
+            )
+            if (status != BatteryStatus.UNRESTRICTED) {
+                TextButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
+                    Text("App battery settings")
+                }
             }
         }
     }
@@ -429,26 +471,39 @@ private fun TimingSettingsCard(
         ) {
             Text("Timing", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(
-                "The planner stays near the target while respecting the normal and final limits.",
+                "The planner aims for the middle of the normal range while respecting the final minimum.",
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(4.dp))
-            SettingStepper("Target dance block", settings.targetSeconds, "s", 10, 180) {
-                onChanged(settings.copy(targetSeconds = it))
-            }
-            SettingStepper("Shortest normal block", settings.minimumSeconds, "s", 10, 180) {
+            SettingStepper(
+                "Shortest normal block", settings.minimumSeconds, "s", 10, 180,
+                description = "Minimum dance time between switches, excluding the switch itself.",
+            ) {
                 onChanged(settings.copy(minimumSeconds = it))
             }
-            SettingStepper("Longest normal block", settings.maximumSeconds, "s", 10, 180) {
+            SettingStepper(
+                "Longest normal block", settings.maximumSeconds, "s", 10, 180,
+                description = "Maximum dance time. The planner prefers the middle of the normal range.",
+            ) {
                 onChanged(settings.copy(maximumSeconds = it))
             }
-            SettingStepper("Shortest final block", settings.finalMinimumSeconds, "s", 5, 180) {
+            SettingStepper(
+                "Shortest final block", settings.finalMinimumSeconds, "s", 5, 180,
+                description = "The last dance block may be shorter, so the schedule can fit the song.",
+            ) {
                 onChanged(settings.copy(finalMinimumSeconds = it))
             }
-            SettingStepper("Switch time", settings.cueSeconds, "s", 1, 15) {
+            SettingStepper(
+                "Switch time", settings.cueSeconds, "s", 1, 15,
+                description = "Time to high-five and rotate while the music plays quietly.",
+            ) {
                 onChanged(settings.copy(cueSeconds = it))
             }
-            SettingStepper("End guard", settings.endGuardMillis / 100, "× 0.1s", 1, 30) {
+            SettingStepper(
+                "End guard", settings.endGuardMillis / 100, "s", 1, 30,
+                description = "Pause this far before the song ends. Increase if the next song starts briefly.",
+                valueText = String.format(Locale.ROOT, "%.1f s", settings.endGuardMillis / 1_000.0),
+            ) {
                 onChanged(settings.copy(endGuardMillis = it * 100))
             }
         }
@@ -476,6 +531,7 @@ private fun SoundSettingsCard(
             Text("Switch sound", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             BooleanSetting(
                 label = "Play a switch tone",
+                description = "Turn off to keep the quiet switch interval without a sound.",
                 checked = settings.playSwitchSound,
                 onChanged = { onChanged(settings.copy(playSwitchSound = it)) },
             )
@@ -594,34 +650,41 @@ private fun SettingStepper(
     unit: String,
     minimum: Int,
     maximum: Int,
+    description: String? = null,
+    valueText: String? = null,
     onChanged: (Int) -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-        OutlinedButton(
-            onClick = { onChanged((value - 1).coerceAtLeast(minimum)) },
-            enabled = value > minimum,
-            contentPadding = ButtonDefaults.ContentPadding,
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("−")
+            Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+            OutlinedButton(
+                onClick = { onChanged((value - 1).coerceAtLeast(minimum)) },
+                enabled = value > minimum,
+                contentPadding = ButtonDefaults.ContentPadding,
+            ) {
+                Text("−")
+            }
+            Text(
+                text = valueText ?: "$value $unit",
+                modifier = Modifier.padding(horizontal = 10.dp),
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+            )
+            OutlinedButton(
+                onClick = { onChanged((value + 1).coerceAtMost(maximum)) },
+                enabled = value < maximum,
+                contentPadding = ButtonDefaults.ContentPadding,
+            ) {
+                Text("+")
+            }
         }
-        Text(
-            text = "$value $unit",
-            modifier = Modifier.padding(horizontal = 10.dp),
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-        )
-        OutlinedButton(
-            onClick = { onChanged((value + 1).coerceAtMost(maximum)) },
-            enabled = value < maximum,
-            contentPadding = ButtonDefaults.ContentPadding,
-        ) {
-            Text("+")
+        description?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

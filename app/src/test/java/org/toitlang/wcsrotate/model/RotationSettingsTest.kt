@@ -28,7 +28,6 @@ class RotationSettingsTest {
     fun `each timing control requires replanning`() {
         val original = RotationSettings()
         val changes = listOf(
-            original.copy(targetSeconds = 55),
             original.copy(minimumSeconds = 40),
             original.copy(maximumSeconds = 70),
             original.copy(finalMinimumSeconds = 30),
@@ -37,6 +36,13 @@ class RotationSettingsTest {
         )
 
         changes.forEach { assertFalse(it.sanitized().hasSameTimingAs(original)) }
+    }
+
+    @Test
+    fun `midpoint follows the sanitized normal range`() {
+        assertEquals(55_000L, RotationSettings().sanitized().midpointMillis)
+        assertEquals(54_500L, RotationSettings(maximumSeconds = 64).sanitized().midpointMillis)
+        assertEquals(30_000L, RotationSettings(minimumSeconds = 45, maximumSeconds = 30).sanitized().midpointMillis)
     }
 
     @Test

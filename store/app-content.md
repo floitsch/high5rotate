@@ -8,7 +8,7 @@ Review these with the publisher before submission. They describe the source in t
 - **Account creation:** None; no account-deletion feature is applicable.
 - **Privacy policy:** `https://floitsch.github.io/high5rotate/privacy.html`, once publicly reachable. The same text is accessible in the app.
 - **Ads:** No.
-- **App access:** No high5rotate sign-in or paywall. Reviewers must grant notification access, use an Android media-session player, arm the timer, and play a track. A reviewer can use a local music player and an audio file they own; a paid streaming account is not required by high5rotate.
+- **App access:** No High 5 Rotate sign-in or paywall. Reviewers must grant notification access, use an Android media-session player, arm the timer, and play a track. A reviewer can use a local music player and an audio file they own; a paid streaming account is not required by High 5 Rotate.
 
 Play defines collection around transmission off the device; processing solely on the device is outside that definition. Reassess the form if adding network access, telemetry, third-party SDKs, or other data flows. [Data safety guidance](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en)
 
@@ -38,4 +38,4 @@ Play reviews the declared special-use justification; approval is not automatic. 
 | WAKE_LOCK | Keep CPU timing active while music or a cue plays; screen stays off. |
 | System document picker grant | Read only the selected sound file; no broad media/storage permission. |
 
-There is no accessibility service, microphone permission, exact-alarm permission, full-screen intent, direct battery-exemption request permission, or app Internet permission. The battery button opens Android's settings so the user can choose an exemption.
+There is no accessibility service, microphone permission, exact-alarm permission, full-screen intent, direct battery-exemption request permission, or app Internet permission. The battery button opens this app's battery page where supported, falling back to App info. Status checks distinguish an explicit background restriction, normal optimization, and an existing exemption; setup does not block arming.

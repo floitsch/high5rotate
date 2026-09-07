@@ -10,10 +10,10 @@ class RotationPlannerTest {
     private val settings = RotationSettings()
 
     @Test
-    fun `three minute five second song uses legal final block`() {
+    fun `three minute five second song prefers blocks nearer the midpoint`() {
         val plan = RotationPlanner.create(0, 185_000, settings)
 
-        assertEquals(4, plan.danceBlocksMs.size)
+        assertEquals(3, plan.danceBlocksMs.size)
         assertTrue(plan.danceBlocksMs.dropLast(1).all { it in 45_000..65_000 })
         assertTrue(plan.danceBlocksMs.last() in 35_000..65_000)
         assertFalse(plan.usesLongBlockFallback)
@@ -48,7 +48,6 @@ class RotationPlannerTest {
     @Test
     fun `custom constraints are honored`() {
         val custom = RotationSettings(
-            targetSeconds = 60,
             minimumSeconds = 55,
             maximumSeconds = 75,
             finalMinimumSeconds = 40,
@@ -59,6 +58,32 @@ class RotationPlannerTest {
         assertTrue(plan.danceBlocksMs.dropLast(1).all { it in 55_000..75_000 })
         assertTrue(plan.danceBlocksMs.last() in 40_000..75_000)
         assertEquals(240_000L, plan.danceBlocksMs.sum() + plan.cuePositionsMs.size * 4_000L)
+    }
+
+    @Test
+    fun `shorter final block still allows a legal partition`() {
+        val plan = RotationPlanner.create(0, 83_000, settings)
+
+        assertEquals(listOf(45_000L, 35_000L), plan.danceBlocksMs)
+        assertEquals(listOf(45_000L), plan.cuePositionsMs)
+        assertFalse(plan.usesLongBlockFallback)
+    }
+
+    @Test
+    fun `long song chooses the valid schedule nearest the midpoint`() {
+        val plan = RotationPlanner.create(0, 600_000, settings)
+
+        // Both 10 and 11 blocks fit, but 57.3 seconds is nearer 55 than 51.8 is.
+        assertEquals(List(10) { 57_300L }, plan.danceBlocksMs)
+        assertFalse(plan.usesLongBlockFallback)
+    }
+
+    @Test
+    fun `half second midpoint is preserved`() {
+        val plan = RotationPlanner.create(0, 572_000, settings.copy(maximumSeconds = 64))
+
+        assertEquals(List(10) { 54_500L }, plan.danceBlocksMs)
+        assertFalse(plan.usesLongBlockFallback)
     }
 
     @Test

@@ -1,4 +1,4 @@
-First high5rotate testing release.
+First High 5 Rotate testing release.
 • Adaptive partner rotation timing and song-end pause controls.
 • Improved screen-off timing and schedule continuity when reopening the app.
 • Built-in switch tones and support for a selected audio file.

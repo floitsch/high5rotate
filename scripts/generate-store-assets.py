@@ -33,7 +33,7 @@ feature = '''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" v
 <circle cx="945" cy="20" r="215" fill="#39265C"/>
 <circle cx="10" cy="515" r="185" fill="#39265C"/>
 <g font-family="DejaVu Sans, sans-serif">
-<text x="92" y="190" fill="#FFB703" font-size="67" font-weight="bold">high5rotate</text>
+<text x="92" y="190" fill="#FFB703" font-size="67" font-weight="bold">High 5 Rotate</text>
 <text x="94" y="252" fill="#FFFFFF" font-size="31">High five. Rotate. Keep dancing.</text>
 <text x="94" y="297" fill="#EBDDFF" font-size="25">Partner rotation cues, timed to your music.</text>
 </g>
@@ -58,9 +58,9 @@ docs.mkdir(exist_ok=True)
 (docs / ".nojekyll").touch()
 (docs / "privacy.html").write_text(f'''<!doctype html>
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>high5rotate privacy policy</title>
+<title>High 5 Rotate privacy policy</title>
 <style>body{{font:18px/1.65 system-ui,sans-serif;max-width:760px;margin:48px auto;padding:0 24px;background:#fff8f1;color:#231942}}a{{color:#6d3fc0}}</style>
-<main><h1>high5rotate privacy policy</h1>{policy_html}
-<p><a href="https://github.com/floitsch/high5rotate/issues">Contact the project</a> · <a href="./">high5rotate</a></p></main></html>
+<main><h1>High 5 Rotate privacy policy</h1>{policy_html}
+<p><a href="https://github.com/floitsch/high5rotate/issues">Contact the project</a> · <a href="./">High 5 Rotate</a></p></main></html>
 ''')
 print("Exported icon, feature graphic, and public privacy page.")

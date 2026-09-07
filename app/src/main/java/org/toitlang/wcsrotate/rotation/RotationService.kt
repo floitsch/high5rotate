@@ -332,7 +332,7 @@ class RotationService : Service() {
             blindNextCuePositionMs = null
         } else {
             plan = null
-            blindNextCuePositionMs = positionMs + settings.targetSeconds * 1_000L
+            blindNextCuePositionMs = positionMs + settings.midpointMillis
         }
     }
 
@@ -393,7 +393,7 @@ class RotationService : Service() {
             if (cuePosition != null && position >= cuePosition) {
                 playCue()
                 blindNextCuePositionMs = position +
-                    (settings.cueSeconds + settings.targetSeconds) * 1_000L
+                    settings.cueSeconds * 1_000L + settings.midpointMillis
             }
         }
         publishPlaybackState(position)
@@ -577,7 +577,7 @@ class RotationService : Service() {
         }
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(trackTitle ?: "high5rotate is armed")
+            .setContentTitle(trackTitle ?: "High 5 Rotate is armed")
             .setContentText(status)
             .setContentIntent(openIntent)
             .setOngoing(true)

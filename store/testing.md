@@ -1,0 +1,17 @@
+# Device release checks
+
+Record phone model, Android version, app version, music player, speaker, battery setting, and the observed result. Automated planner/settings tests and lint cannot establish physical screen-lock, audio, and OEM battery behavior.
+
+1. Fresh installation: grant notification access; deny/allow ordinary notifications and confirm the timer remains controllable. Revoke media access and reopen to verify the permission prompt.
+2. Play a song with known duration. Note the next switch and block plan, lock and immediately unlock, and leave/reopen the app repeatedly. The existing schedule must remain intact rather than be rebuilt from the remaining duration.
+3. With battery optimization disabled, lock an unplugged phone through several full songs. Cues should occur at the planned positions, music should recover after the configured quiet interval, and the final pause should precede autoplay. Repeat on the classroom Bluetooth speaker.
+4. Pause music, switch songs, seek forwards/backwards, and destroy/recreate the music session. Confirm replanning only when appropriate and no stale timer after the session disappears.
+5. Turn final tone on/off. Check wake locks using `adb shell dumpsys power`: the `wcsrotate:rotation` lock should be held during music/cues, released while paused/waiting, and absent after disarming. Force-stop should also leave no held lock.
+6. Choose each built-in tone; preview while disarmed. Reopen and confirm it is remembered. Change the sound while armed and confirm the dance schedule does not change.
+7. Pick a local audio file, preview it, and play a full cue. Test a short file, a file longer than switch time, a corrupt file, a deleted/moved file, cancelling the picker, and switching between built-in and saved custom sound. Missing or unreadable files should fall back to a beep. Long files must stop and release audio focus when switch time ends.
+8. Pause or disarm during a cue, leave the app during a preview, and rapidly switch preview selections. Confirm audio and ducking do not remain active. Preview is disabled while armed.
+9. Verify no-duration playback shows fixed-interval behavior and does not promise song-end stopping. Test manual next-song selection and autoplay guarding separately.
+10. Test API 26 and API 36 where available, rotation/large font sizes, and returning from battery/document settings. Check the public privacy page and the in-app policy.
+11. Run these checks on the signed build installed through Play internal testing. Review the Console pre-launch report before applying for production.
+
+For deliberate Doze testing on a dedicated connected test device, see [Android's Doze test procedure](https://developer.android.com/training/monitoring-device-state/doze-standby#testing_doze). Restore any forced idle or simulated battery state afterward. A wake lock alone does not exempt an app from Doze; the battery-settings setup is part of the screen-off test.

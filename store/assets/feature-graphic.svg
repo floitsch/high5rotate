@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+<rect width="1024" height="500" fill="#231942"/>
+<circle cx="945" cy="20" r="215" fill="#39265C"/>
+<circle cx="10" cy="515" r="185" fill="#39265C"/>
+<g font-family="DejaVu Sans, sans-serif">
+<text x="92" y="190" fill="#FFB703" font-size="67" font-weight="bold">high5rotate</text>
+<text x="94" y="252" fill="#FFFFFF" font-size="31">Keep the class dancing.</text>
+<text x="94" y="297" fill="#EBDDFF" font-size="25">Partner rotation cues, timed to your music.</text>
+</g>
+<g fill="#FFB703">
+<circle cx="119" cy="369" r="11"/><circle cx="367" cy="369" r="11"/>
+<circle cx="615" cy="369" r="11"/><circle cx="863" cy="369" r="11"/>
+</g>
+<path d="M139 369H347M387 369H595M635 369H843" stroke="#EBDDFF" stroke-width="4" stroke-linecap="round"/>
+</svg>

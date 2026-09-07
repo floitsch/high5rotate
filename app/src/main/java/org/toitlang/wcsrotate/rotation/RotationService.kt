@@ -54,6 +54,7 @@ class RotationService : Service() {
     private var durationMs: Long = 0
     private var plan: RotationPlan? = null
     private var nextCueIndex = 0
+    private var isFirstBlock = true
     private var blindNextCuePositionMs: Long? = null
     private var lastEstimatedPositionMs = 0L
     private var pauseRequestedAtEnd = false
@@ -267,6 +268,7 @@ class RotationService : Service() {
         }
 
         if (trackChanged) {
+            isFirstBlock = true
             activeTrackKey = newKey
             trackTitle = newTitle
             trackArtist = newArtist
@@ -288,6 +290,7 @@ class RotationService : Service() {
                 if (pauseRequestedAtEnd) {
                     pauseRequestedAtEnd = false
                     pauseObservedAtEnd = false
+                    isFirstBlock = true
                     createPlan(estimatedPosition(state))
                 }
                 if (plan == null && blindNextCuePositionMs == null) createPlan(estimatedPosition(state))
@@ -327,12 +330,15 @@ class RotationService : Service() {
         lastEstimatedPositionMs = positionMs
         if (durationMs > 0) {
             val stop = (durationMs - settings.endGuardMillis).coerceAtLeast(positionMs)
-            plan = RotationPlanner.create(positionMs, stop, settings)
+            plan = RotationPlanner.create(positionMs, stop, settings, isFirstBlock)
             nextCueIndex = 0
             blindNextCuePositionMs = null
         } else {
             plan = null
-            blindNextCuePositionMs = positionMs + settings.maximumSeconds * 1_000L
+            val firstBlockExtra = if (isFirstBlock && settings.addSwitchTimeToFirstBlock) {
+                settings.cueSeconds * 1_000L
+            } else 0L
+            blindNextCuePositionMs = positionMs + settings.maximumSeconds * 1_000L + firstBlockExtra
         }
     }
 
@@ -402,6 +408,7 @@ class RotationService : Service() {
 
     private fun playCue(replanAfterCue: Boolean = false) {
         if (cuePlayer.isPlaying) return
+        isFirstBlock = false
         if (!replanAfterCue) nextCueIndex++
         publishState(RotationPhase.SWITCHING)
         cuePlayer.play(

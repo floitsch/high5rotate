@@ -35,6 +35,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
@@ -475,7 +476,7 @@ private fun TimingSettingsCard(
         ) {
             Text("Timing", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(
-                "Every dance block stays in this range. The planner prefers longer blocks and stops early if needed.",
+                "The planner prefers longer blocks within this range and stops early if needed. You can give the first block extra time below.",
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(4.dp))
@@ -496,6 +497,19 @@ private fun TimingSettingsCard(
                 description = "Time to high-five and rotate while the music plays quietly.",
             ) {
                 onChanged(settings.copy(cueSeconds = it))
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = settings.addSwitchTimeToFirstBlock,
+                    onCheckedChange = { onChanged(settings.copy(addSwitchTimeToFirstBlock = it)) },
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Add switch time to the first block")
+                    Text(
+                        "Adds ${settings.cueSeconds} s for the intro and starter step, on top of the block limits. Music plays normally.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
             SettingStepper(
                 "End guard", settings.endGuardMillis / 100, "s", 1, 30,

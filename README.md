@@ -21,11 +21,14 @@ The app stays armed after pausing and waits for the teacher to select the next s
 - Shortest block: 45 seconds
 - Longest block: 65 seconds
 - Switch time: 3 seconds
+- Add switch time to the first block: disabled
 - Switch tone: double beep (enabled)
 - Final post-song rotation tone: disabled
 - End guard: 0.5 seconds
 
-All of these values are configurable in the app. Every dance block, including the last, uses the same shortest and longest limits. When several schedules fit, the planner chooses fewer, longer blocks. It uses the full available song time whenever possible; otherwise it trims the smallest possible tail. For example, with 45–65 second blocks and 3-second switches, 70 seconds of available music becomes one 65-second dance. If less than one shortest block remains, it pauses immediately. There is no separate target or final-block setting.
+All of these values are configurable in the app. Every dance block, including the last, uses the same shortest and longest limits before the optional first-block extra. When several schedules fit, the planner chooses fewer, longer blocks. It uses the full available song time whenever possible; otherwise it trims the smallest possible tail. For example, with 45–65 second blocks and 3-second switches, 70 seconds of available music becomes one 65-second dance. If less than one shortest block remains, it pauses immediately. There is no separate target or final-block setting.
+
+Check **Add switch time to the first block** to give dancers time for a slow intro and starter step. It adds one switch interval on top of the first block’s normal dance time, with music playing normally. For example, fixed 60-second dances with 6-second switches become 66 seconds, switch, 60 seconds, switch, 60 seconds: 198 seconds total. The extra is reserved when planning and is not repeated after a partner switch.
 
 ## First run
 
@@ -66,7 +69,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - `RotationPlanner` computes the song schedule and has unit tests covering both block limits, longer-block preference, and minimal end trimming.
 - `CuePlayer` requests transient ducking audio focus, plays built-in tones or a selected audio file, and releases audio resources and focus after the configured switch time. File access uses Android's document picker and a persisted grant; no broad storage permission is needed.
 - The switch tone can be disabled while retaining the quiet interval. When tones are enabled, an optional final tone after pausing the song signals one last partner rotation for the next song.
-- If a player does not publish track duration, the app uses the longest block setting for each dance block, plus the switch interval. It cannot reliably stop before the next song in that degraded mode.
+- If a player does not publish track duration, the app uses the longest block setting for each dance block, plus the switch interval. The optional first-block extra also applies. It cannot reliably stop before the next song in that degraded mode.
 
 The end guard exists because media-control and Bluetooth pipelines can introduce small timing differences. Adjust it on the real classroom phone and speaker if the end is cut too early or the next song begins briefly.
 

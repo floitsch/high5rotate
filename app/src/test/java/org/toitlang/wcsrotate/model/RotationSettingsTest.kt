@@ -31,6 +31,7 @@ class RotationSettingsTest {
             original.copy(minimumSeconds = 40),
             original.copy(maximumSeconds = 70),
             original.copy(cueSeconds = 4),
+            original.copy(addSwitchTimeToFirstBlock = true),
             original.copy(endGuardMillis = 600),
         )
 

@@ -14,6 +14,7 @@ data class RotationSettings(
     val minimumSeconds: Int = 45,
     val maximumSeconds: Int = 65,
     val cueSeconds: Int = 3,
+    val addSwitchTimeToFirstBlock: Boolean = false,
     val playSwitchSound: Boolean = true,
     val playSoundAtSongEnd: Boolean = false,
     val endGuardMillis: Int = 500,
@@ -25,6 +26,7 @@ data class RotationSettings(
         minimumSeconds == other.minimumSeconds &&
             maximumSeconds == other.maximumSeconds &&
             cueSeconds == other.cueSeconds &&
+            addSwitchTimeToFirstBlock == other.addSwitchTimeToFirstBlock &&
             endGuardMillis == other.endGuardMillis
 
     fun sanitized(): RotationSettings {
@@ -46,6 +48,7 @@ class RotationSettingsStore(context: Context) {
         minimumSeconds = preferences.getInt(MINIMUM, 45),
         maximumSeconds = preferences.getInt(MAXIMUM, 65),
         cueSeconds = preferences.getInt(CUE, 3),
+        addSwitchTimeToFirstBlock = preferences.getBoolean(EXTRA_FIRST_BLOCK, false),
         playSwitchSound = preferences.getBoolean(PLAY_SWITCH_SOUND, true),
         playSoundAtSongEnd = preferences.getBoolean(PLAY_SOUND_AT_SONG_END, false),
         endGuardMillis = preferences.getInt(END_GUARD, 500),
@@ -64,6 +67,7 @@ class RotationSettingsStore(context: Context) {
             .putInt(MINIMUM, value.minimumSeconds)
             .putInt(MAXIMUM, value.maximumSeconds)
             .putInt(CUE, value.cueSeconds)
+            .putBoolean(EXTRA_FIRST_BLOCK, value.addSwitchTimeToFirstBlock)
             .putBoolean(PLAY_SWITCH_SOUND, value.playSwitchSound)
             .putBoolean(PLAY_SOUND_AT_SONG_END, value.playSoundAtSongEnd)
             .putInt(END_GUARD, value.endGuardMillis)
@@ -84,6 +88,7 @@ class RotationSettingsStore(context: Context) {
         const val MINIMUM = "minimum_seconds"
         const val MAXIMUM = "maximum_seconds"
         const val CUE = "cue_seconds"
+        const val EXTRA_FIRST_BLOCK = "add_switch_time_to_first_block"
         const val PLAY_SWITCH_SOUND = "play_switch_sound"
         const val PLAY_SOUND_AT_SONG_END = "play_sound_at_song_end"
         const val END_GUARD = "end_guard_millis"

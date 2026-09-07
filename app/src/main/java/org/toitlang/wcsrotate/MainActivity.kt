@@ -275,7 +275,7 @@ private fun MainScreen(
             PrivacyButton()
 
             Text(
-                text = "The music keeps playing quietly during each switch. The app pauses near the end of the current song and then waits for you to choose another.",
+                text = "The music keeps playing quietly during each switch. The app stops after the last full dance block, then waits for you to choose another song.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp),
@@ -426,8 +426,8 @@ private fun StatusCard(state: RotationUiState) {
                 )
                 Text("until next switch", style = MaterialTheme.typography.labelLarge)
             }
-            if (state.trackRemainingMs != null) {
-                Text("${formatClock(state.trackRemainingMs)} left in song")
+            if (state.stopInMs != null) {
+                Text("${formatClock(state.stopInMs)} until music stops")
             }
             if (state.blockDurationsMs.isNotEmpty()) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
@@ -439,7 +439,11 @@ private fun StatusCard(state: RotationUiState) {
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    if (state.usesLongBlockFallback) "Long-block fallback" else "Adaptive song plan",
+                    if (state.trimmedEndMs > 0) {
+                        "Stops ${formatClock(state.trimmedEndMs)} early to keep full dance blocks"
+                    } else {
+                        "Full song plan"
+                    },
                     style = MaterialTheme.typography.labelMedium,
                 )
             }
@@ -471,27 +475,21 @@ private fun TimingSettingsCard(
         ) {
             Text("Timing", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(
-                "The planner aims for the middle of the normal range while respecting the final minimum.",
+                "Every dance block stays in this range. The planner prefers longer blocks and stops early if needed.",
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(4.dp))
             SettingStepper(
-                "Shortest normal block", settings.minimumSeconds, "s", 10, 180,
+                "Shortest block", settings.minimumSeconds, "s", 10, 180,
                 description = "Minimum dance time between switches, excluding the switch itself.",
             ) {
                 onChanged(settings.copy(minimumSeconds = it))
             }
             SettingStepper(
-                "Longest normal block", settings.maximumSeconds, "s", 10, 180,
-                description = "Maximum dance time. The planner prefers the middle of the normal range.",
+                "Longest block", settings.maximumSeconds, "s", 10, 180,
+                description = "Maximum dance time. When several schedules fit, choose fewer, longer blocks.",
             ) {
                 onChanged(settings.copy(maximumSeconds = it))
-            }
-            SettingStepper(
-                "Shortest final block", settings.finalMinimumSeconds, "s", 5, 180,
-                description = "The last dance block may be shorter, so the schedule can fit the song.",
-            ) {
-                onChanged(settings.copy(finalMinimumSeconds = it))
             }
             SettingStepper(
                 "Switch time", settings.cueSeconds, "s", 1, 15,

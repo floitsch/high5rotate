@@ -30,19 +30,11 @@ class RotationSettingsTest {
         val changes = listOf(
             original.copy(minimumSeconds = 40),
             original.copy(maximumSeconds = 70),
-            original.copy(finalMinimumSeconds = 30),
             original.copy(cueSeconds = 4),
             original.copy(endGuardMillis = 600),
         )
 
         changes.forEach { assertFalse(it.sanitized().hasSameTimingAs(original)) }
-    }
-
-    @Test
-    fun `midpoint follows the sanitized normal range`() {
-        assertEquals(55_000L, RotationSettings().sanitized().midpointMillis)
-        assertEquals(54_500L, RotationSettings(maximumSeconds = 64).sanitized().midpointMillis)
-        assertEquals(30_000L, RotationSettings(minimumSeconds = 45, maximumSeconds = 30).sanitized().midpointMillis)
     }
 
     @Test

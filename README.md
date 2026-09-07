@@ -9,25 +9,23 @@ High 5 Rotate is an Android-only teaching aid for West Coast Swing classes. Arm 
 While a song plays, the app:
 
 - reads its duration and current position through Android media-session access;
-- divides it into partner blocks near the midpoint of the configured normal range;
+- divides it into partner blocks within your shortest and longest limits, preferring longer blocks;
 - temporarily ducks music and plays a configurable switch cue;
-- avoids a switch that would leave an unreasonably short final block; and
+- ends the song earlier when a full final block cannot fit; and
 - pauses just before the media player advances to the next song.
 
 The app stays armed after pausing and waits for the teacher to select the next song.
 
 ## Defaults
 
-- Normal block range: 45–65 seconds
-- Minimum final block: 35 seconds
+- Shortest block: 45 seconds
+- Longest block: 65 seconds
 - Switch time: 3 seconds
 - Switch tone: double beep (enabled)
 - Final post-song rotation tone: disabled
 - End guard: 0.5 seconds
 
-All of these values are configurable in the app. If no schedule can satisfy the limits, the planner deliberately chooses fewer, longer blocks instead of short blocks.
-
-When several schedules fit, the planner prefers blocks near the midpoint of the normal range (55 seconds by default). There is no separate target setting.
+All of these values are configurable in the app. Every dance block, including the last, uses the same shortest and longest limits. When several schedules fit, the planner chooses fewer, longer blocks. It uses the full available song time whenever possible; otherwise it trims the smallest possible tail. For example, with 45–65 second blocks and 3-second switches, 70 seconds of available music becomes one 65-second dance. If less than one shortest block remains, it pauses immediately. There is no separate target or final-block setting.
 
 ## First run
 
@@ -65,10 +63,10 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - `RotationService` is a user-started foreground service. A partial CPU wake lock is held while timing music or a cue and released when paused, waiting, disarmed, or destroyed. Android Doze and manufacturer battery restrictions can still affect timing; the app distinguishes explicit background restrictions from normal optimization and offers a direct link to its battery settings.
 - Media sessions are matched by session token, so reopening the app preserves the current song plan. Sound-only settings changes also preserve it.
 - `MediaAccessService` grants access to other apps' active Android media sessions.
-- `RotationPlanner` computes the whole-song schedule and has unit tests covering the configurable constraints and impossible-duration fallback.
+- `RotationPlanner` computes the song schedule and has unit tests covering both block limits, longer-block preference, and minimal end trimming.
 - `CuePlayer` requests transient ducking audio focus, plays built-in tones or a selected audio file, and releases audio resources and focus after the configured switch time. File access uses Android's document picker and a persisted grant; no broad storage permission is needed.
 - The switch tone can be disabled while retaining the quiet interval. When tones are enabled, an optional final tone after pausing the song signals one last partner rotation for the next song.
-- If a player does not publish track duration, the app uses the midpoint of the normal range for each dance block, plus the switch interval. It cannot reliably stop before the next song in that degraded mode.
+- If a player does not publish track duration, the app uses the longest block setting for each dance block, plus the switch interval. It cannot reliably stop before the next song in that degraded mode.
 
 The end guard exists because media-control and Bluetooth pipelines can introduce small timing differences. Adjust it on the real classroom phone and speaker if the end is cut too early or the next song begins briefly.
 

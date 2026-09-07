@@ -1,20 +1,13 @@
 // Copyright (C) 2026 Toit contributors.
 package org.toitlang.wcsrotate.model
 
-import kotlin.math.ceil
-import kotlin.math.floor
-import kotlin.math.pow
-import kotlin.math.roundToLong
-
 data class RotationPlan(
     val startPositionMs: Long,
     val stopPositionMs: Long,
     val danceBlocksMs: List<Long>,
     val cuePositionsMs: List<Long>,
-    val usesLongBlockFallback: Boolean,
-) {
-    val isAdaptive: Boolean get() = !usesLongBlockFallback
-}
+    val trimmedEndMs: Long,
+)
 
 object RotationPlanner {
     fun create(
@@ -25,90 +18,46 @@ object RotationPlanner {
         val value = settings.sanitized()
         val start = startPositionMs.coerceAtLeast(0)
         val stop = stopPositionMs.coerceAtLeast(start)
-        val available = (stop - start).toDouble()
-        val cue = value.cueSeconds * 1_000.0
-        val midpoint = value.midpointMillis.toDouble()
-        val minimum = value.minimumSeconds * 1_000.0
-        val maximum = value.maximumSeconds * 1_000.0
-        val finalMinimum = value.finalMinimumSeconds * 1_000.0
+        val available = stop - start
+        val cue = value.cueSeconds * 1_000L
+        val minimum = value.minimumSeconds * 1_000L
+        val maximum = value.maximumSeconds * 1_000L
 
-        if (available <= 0) {
-            return RotationPlan(start, stop, emptyList(), emptyList(), false)
+        if (available < minimum) {
+            return RotationPlan(start, start, emptyList(), emptyList(), available)
         }
 
-        val maximumCandidates = ceil((available + cue) / (finalMinimum + cue))
-            .toInt()
-            .coerceIn(1, 200)
-
-        val candidates = (1..maximumCandidates).mapNotNull { blockCount ->
-            val danceTime = available - (blockCount - 1) * cue
-            val minimumDanceTime = (blockCount - 1) * minimum + finalMinimum
-            val maximumDanceTime = blockCount * maximum
-            if (danceTime < minimumDanceTime || danceTime > maximumDanceTime) return@mapNotNull null
-
-            val average = danceTime / blockCount
-            val blocks = if (average >= minimum) {
-                List(blockCount) { average }
-            } else {
-                List(blockCount - 1) { minimum } +
-                    listOf(danceTime - (blockCount - 1) * minimum)
-            }
-            val score = blocks.sumOf { (it - midpoint).pow(2) } / blockCount
-            Candidate(blocks, score)
+        // The fewest blocks that could cover the song without exceeding the maximum
+        // also give the longest dances when several schedules fit.
+        var blockCount = ((available + cue - 1) / (maximum + cue) + 1).toInt()
+        var danceTime = available - (blockCount - 1) * cue
+        var effectiveStop = stop
+        if (danceTime < blockCount * minimum) {
+            // No full-song partition fits. Keep as much music as possible by using
+            // one fewer block at the maximum length and trimming the leftover tail.
+            blockCount--
+            danceTime = blockCount * maximum
+            effectiveStop = start + danceTime + (blockCount - 1) * cue
         }
 
-        val selected = candidates.minWithOrNull(
-            compareBy<Candidate> { it.score }
-                .thenBy { it.blocks.size },
-        )
-
-        if (selected != null) {
-            return buildPlan(start, stop, selected.blocks, cue, false)
-        }
-
-        // No legal partition exists. Prefer fewer, longer blocks rather than short-changing
-        // students with a block below the configured final minimum.
-        val fallbackCount = floor((available + cue) / (maximum + cue))
-            .toInt()
-            .coerceAtLeast(1)
-        val danceTime = available - (fallbackCount - 1) * cue
-        val blocks = List(fallbackCount) { danceTime / fallbackCount }
-        return buildPlan(start, stop, blocks, cue, true)
-    }
-
-    private fun buildPlan(
-        start: Long,
-        stop: Long,
-        rawBlocks: List<Double>,
-        cueMs: Double,
-        fallback: Boolean,
-    ): RotationPlan {
+        // Distribute rounding milliseconds so every block stays inside the limits.
+        val base = danceTime / blockCount
+        val remainder = danceTime % blockCount
+        val blocks = List(blockCount) { base + if (it < remainder) 1L else 0L }
         val cuePositions = mutableListOf<Long>()
-        var cursor = start.toDouble()
-        rawBlocks.dropLast(1).forEach { block ->
+        var cursor = start
+        blocks.dropLast(1).forEach { block ->
             cursor += block
-            cuePositions += cursor.roundToLong()
-            cursor += cueMs
-        }
-
-        val roundedBlocks = rawBlocks.map { it.roundToLong() }.toMutableList()
-        if (roundedBlocks.isNotEmpty()) {
-            val roundedTotal = roundedBlocks.sum() +
-                (roundedBlocks.size - 1) * cueMs.roundToLong()
-            roundedBlocks[roundedBlocks.lastIndex] += (stop - start) - roundedTotal
+            cuePositions += cursor
+            cursor += cue
         }
 
         return RotationPlan(
             startPositionMs = start,
-            stopPositionMs = stop,
-            danceBlocksMs = roundedBlocks,
+            stopPositionMs = effectiveStop,
+            danceBlocksMs = blocks,
             cuePositionsMs = cuePositions,
-            usesLongBlockFallback = fallback,
+            trimmedEndMs = stop - effectiveStop,
         )
     }
-
-    private data class Candidate(
-        val blocks: List<Double>,
-        val score: Double,
-    )
 }

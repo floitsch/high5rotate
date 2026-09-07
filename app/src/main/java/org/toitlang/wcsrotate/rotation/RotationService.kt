@@ -332,7 +332,7 @@ class RotationService : Service() {
             blindNextCuePositionMs = null
         } else {
             plan = null
-            blindNextCuePositionMs = positionMs + settings.midpointMillis
+            blindNextCuePositionMs = positionMs + settings.maximumSeconds * 1_000L
         }
     }
 
@@ -381,11 +381,12 @@ class RotationService : Service() {
             val cuePosition = currentPlan.cuePositionsMs.getOrNull(nextCueIndex)
             if (cuePosition != null && position >= cuePosition) {
                 val remainingAfterCue = currentPlan.stopPositionMs - position - settings.cueSeconds * 1_000L
-                if (remainingAfterCue >= settings.finalMinimumSeconds * 1_000L) {
+                // Allow one polling interval of timing jitter at an exact boundary.
+                if (remainingAfterCue + TICK_MS >= settings.minimumSeconds * 1_000L) {
                     playCue()
                 } else {
-                    nextCueIndex = currentPlan.cuePositionsMs.size
-                    publishPlaybackState(position, "Final switch skipped")
+                    pauseAtEnd(controller, "Stopped before a too-short final block")
+                    return
                 }
             }
         } else {
@@ -393,7 +394,7 @@ class RotationService : Service() {
             if (cuePosition != null && position >= cuePosition) {
                 playCue()
                 blindNextCuePositionMs = position +
-                    settings.cueSeconds * 1_000L + settings.midpointMillis
+                    (settings.cueSeconds + settings.maximumSeconds) * 1_000L
             }
         }
         publishPlaybackState(position)
@@ -428,7 +429,7 @@ class RotationService : Service() {
         val position = estimatedPosition(state)
         val remaining = plan?.stopPositionMs?.minus(position)
         if (remaining != null &&
-            remaining - settings.cueSeconds * 1_000L < settings.finalMinimumSeconds * 1_000L
+            remaining - settings.cueSeconds * 1_000L < settings.minimumSeconds * 1_000L
         ) {
             publishPlaybackState(position, "Too close to the end for another switch")
             return
@@ -438,9 +439,14 @@ class RotationService : Service() {
 
     private fun pauseAtEnd(
         controller: MediaController,
-        waitingMessage: String = "Song finished — choose the next song",
+        waitingMessage: String = when {
+            plan?.danceBlocksMs?.isEmpty() == true -> "Not enough music left for a dance block"
+            (plan?.trimmedEndMs ?: 0) > 0 -> "Song stopped early — choose the next song"
+            else -> "Song finished — choose the next song"
+        },
     ) {
         if (pauseRequestedAtEnd) return
+        val hadDanceBlocks = plan?.danceBlocksMs?.isNotEmpty() != false
         pauseRequestedAtEnd = true
         pauseObservedAtEnd = false
         finalCuePlaying = false
@@ -448,7 +454,7 @@ class RotationService : Service() {
         controller.transportControls.pause()
         plan = null
         blindNextCuePositionMs = null
-        if (settings.playSwitchSound && settings.playSoundAtSongEnd) {
+        if (hadDanceBlocks && settings.playSwitchSound && settings.playSoundAtSongEnd) {
             finalCuePlaying = true
             publishState(RotationPhase.SWITCHING, "Final rotation for the next song")
             cuePlayer.play(
@@ -469,7 +475,9 @@ class RotationService : Service() {
         val currentPlan = plan
         val nextCue = currentPlan?.cuePositionsMs?.getOrNull(nextCueIndex)
             ?: blindNextCuePositionMs
-        val remaining = if (durationMs > 0) (durationMs - position).coerceAtLeast(0) else null
+        val remaining = if (durationMs > 0) {
+            ((currentPlan?.stopPositionMs ?: durationMs) - position).coerceAtLeast(0)
+        } else null
         publishState(
             phase = if (cuePlayer.isPlaying) RotationPhase.SWITCHING else RotationPhase.DANCING,
             message = message,
@@ -493,9 +501,9 @@ class RotationService : Service() {
                 trackTitle = trackTitle,
                 trackArtist = trackArtist,
                 nextCueInMs = nextCueInMs,
-                trackRemainingMs = remainingMs,
+                stopInMs = remainingMs,
                 blockDurationsMs = plan?.danceBlocksMs.orEmpty(),
-                usesLongBlockFallback = plan?.usesLongBlockFallback == true,
+                trimmedEndMs = plan?.trimmedEndMs ?: 0,
                 message = message,
             ),
         )
@@ -571,8 +579,9 @@ class RotationService : Service() {
         val status = when {
             !MediaAccess.isGranted(this) -> "Media access required"
             cuePlayer.isPlaying -> "Switch partners"
-            nextCueInMs != null -> "Next switch ${formatTime(nextCueInMs)} · song ${formatTime(remainingMs)} left"
+            nextCueInMs != null -> "Next switch ${formatTime(nextCueInMs)} · stops in ${formatTime(remainingMs)}"
             pauseRequestedAtEnd -> "Waiting for the next song"
+            remainingMs != null -> "Music stops in ${formatTime(remainingMs)}"
             else -> "Waiting for music"
         }
         return NotificationCompat.Builder(this, CHANNEL_ID)

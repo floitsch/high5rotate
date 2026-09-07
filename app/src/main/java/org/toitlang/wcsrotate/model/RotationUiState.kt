@@ -19,9 +19,9 @@ data class RotationUiState(
     val trackTitle: String? = null,
     val trackArtist: String? = null,
     val nextCueInMs: Long? = null,
-    val trackRemainingMs: Long? = null,
+    val stopInMs: Long? = null,
     val blockDurationsMs: List<Long> = emptyList(),
-    val usesLongBlockFallback: Boolean = false,
+    val trimmedEndMs: Long = 0,
     val message: String? = null,
 )
 

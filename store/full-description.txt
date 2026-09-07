@@ -10,7 +10,7 @@ HOW IT WORKS
 • Disarm when class is over.
 
 MAKE IT FIT YOUR CLASS
-Choose your minimum and maximum dance-block lengths, minimum final block, and switch time. When several schedules fit, High 5 Rotate prefers blocks near the middle of your normal range. Choose a built-in cue or your own audio file, or turn tones off while keeping the quiet switch interval. An optional final cue signals a partner change after the song.
+Choose your shortest and longest dance blocks and switch time. The same limits apply to every block. When several schedules fit, High 5 Rotate prefers fewer, longer blocks. If a complete final block cannot fit, it ends the song earlier. Choose a built-in cue or your own audio file, or turn tones off while keeping the quiet switch interval. An optional final cue signals a partner change after the song.
 
 The timer continues while you use another app or lock the screen. The app shows your background activity status. If cues are delayed with the screen locked, its battery button takes you directly to this app's settings to allow unrestricted timing.
 

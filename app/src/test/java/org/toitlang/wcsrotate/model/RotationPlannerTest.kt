@@ -2,7 +2,6 @@
 package org.toitlang.wcsrotate.model
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -10,105 +9,139 @@ class RotationPlannerTest {
     private val settings = RotationSettings()
 
     @Test
-    fun `three minute five second song prefers blocks nearer the midpoint`() {
+    fun `three minute five second song uses three long dances`() {
         val plan = RotationPlanner.create(0, 185_000, settings)
-
-        assertEquals(3, plan.danceBlocksMs.size)
-        assertTrue(plan.danceBlocksMs.dropLast(1).all { it in 45_000..65_000 })
-        assertTrue(plan.danceBlocksMs.last() in 35_000..65_000)
-        assertFalse(plan.usesLongBlockFallback)
-        assertEquals(185_000L, plan.danceBlocksMs.sum() + plan.cuePositionsMs.size * 3_000L)
+        assertEquals(listOf(59_667L, 59_667L, 59_666L), plan.danceBlocksMs)
+        assertEquals(185_000L, plan.stopPositionMs)
+        assertEquals(0L, plan.trimmedEndMs)
     }
 
     @Test
-    fun `impossible seventy second song prefers one long block`() {
-        val plan = RotationPlanner.create(0, 70_000, settings)
-
-        assertEquals(listOf(70_000L), plan.danceBlocksMs)
-        assertTrue(plan.cuePositionsMs.isEmpty())
-        assertTrue(plan.usesLongBlockFallback)
-    }
-
-    @Test
-    fun `three minute twenty three second song is evenly divided`() {
+    fun `three minute twenty three second song needs four dances`() {
         val plan = RotationPlanner.create(0, 203_000, settings)
-
-        assertEquals(listOf(48_500L, 48_500L, 48_500L, 48_500L), plan.danceBlocksMs)
+        assertEquals(List(4) { 48_500L }, plan.danceBlocksMs)
         assertEquals(listOf(48_500L, 100_000L, 151_500L), plan.cuePositionsMs)
+        assertEquals(0L, plan.trimmedEndMs)
     }
 
     @Test
-    fun `planning from current position uses only remaining song`() {
-        val plan = RotationPlanner.create(60_000, 203_000, settings)
-
-        assertEquals(143_000L, plan.danceBlocksMs.sum() + plan.cuePositionsMs.size * 3_000L)
-        assertTrue(plan.cuePositionsMs.all { it >= 60_000 && it < 203_000 })
-    }
-
-    @Test
-    fun `custom constraints are honored`() {
-        val custom = RotationSettings(
-            minimumSeconds = 55,
-            maximumSeconds = 75,
-            finalMinimumSeconds = 40,
-            cueSeconds = 4,
-        )
-        val plan = RotationPlanner.create(0, 240_000, custom)
-
-        assertTrue(plan.danceBlocksMs.dropLast(1).all { it in 55_000..75_000 })
-        assertTrue(plan.danceBlocksMs.last() in 40_000..75_000)
-        assertEquals(240_000L, plan.danceBlocksMs.sum() + plan.cuePositionsMs.size * 4_000L)
-    }
-
-    @Test
-    fun `shorter final block still allows a legal partition`() {
-        val plan = RotationPlanner.create(0, 83_000, settings)
-
-        assertEquals(listOf(45_000L, 35_000L), plan.danceBlocksMs)
-        assertEquals(listOf(45_000L), plan.cuePositionsMs)
-        assertFalse(plan.usesLongBlockFallback)
-    }
-
-    @Test
-    fun `long song chooses the valid schedule nearest the midpoint`() {
+    fun `ambiguous song prefers the fewest longest blocks`() {
         val plan = RotationPlanner.create(0, 600_000, settings)
-
-        // Both 10 and 11 blocks fit, but 57.3 seconds is nearer 55 than 51.8 is.
-        assertEquals(List(10) { 57_300L }, plan.danceBlocksMs)
-        assertFalse(plan.usesLongBlockFallback)
+        // Nine, ten, eleven, and twelve blocks all fit. Nine gives the longest dances.
+        assertEquals(List(9) { 64_000L }, plan.danceBlocksMs)
+        assertEquals(600_000L, plan.stopPositionMs)
+        assertEquals(0L, plan.trimmedEndMs)
     }
 
     @Test
-    fun `half second midpoint is preserved`() {
-        val plan = RotationPlanner.create(0, 572_000, settings.copy(maximumSeconds = 64))
-
-        assertEquals(List(10) { 54_500L }, plan.danceBlocksMs)
-        assertFalse(plan.usesLongBlockFallback)
+    fun `seventy second song stops at the maximum block length`() {
+        val plan = RotationPlanner.create(0, 70_000, settings)
+        assertEquals(listOf(65_000L), plan.danceBlocksMs)
+        assertTrue(plan.cuePositionsMs.isEmpty())
+        assertEquals(65_000L, plan.stopPositionMs)
+        assertEquals(5_000L, plan.trimmedEndMs)
     }
 
     @Test
-    fun `all ordinary song lengths obey constraints or use long fallback`() {
-        for (durationSeconds in 35..600) {
-            val plan = RotationPlanner.create(0, durationSeconds * 1_000L, settings)
-            assertEquals(
-                "duration=$durationSeconds",
-                durationSeconds * 1_000L,
-                plan.danceBlocksMs.sum() + plan.cuePositionsMs.size * 3_000L,
-            )
-            if (plan.isAdaptive) {
-                assertTrue(
-                    "normal blocks at duration=$durationSeconds: ${plan.danceBlocksMs}",
-                    plan.danceBlocksMs.dropLast(1).all { it in 45_000..65_000 },
-                )
-                assertTrue(
-                    "final block at duration=$durationSeconds: ${plan.danceBlocksMs}",
-                    plan.danceBlocksMs.last() in 35_000..65_000,
-                )
-            } else {
-                assertTrue(
-                    "fallback should prefer long blocks at duration=$durationSeconds",
-                    plan.danceBlocksMs.all { it > 65_000 },
-                )
+    fun `final dance does not get a shorter minimum`() {
+        val plan = RotationPlanner.create(0, 83_000, settings)
+        assertEquals(listOf(65_000L), plan.danceBlocksMs)
+        assertEquals(65_000L, plan.stopPositionMs)
+        assertEquals(18_000L, plan.trimmedEndMs)
+    }
+
+    @Test
+    fun `exactly two minimum blocks include the switch time`() {
+        val plan = RotationPlanner.create(0, 93_000, settings)
+        assertEquals(listOf(45_000L, 45_000L), plan.danceBlocksMs)
+        assertEquals(listOf(45_000L), plan.cuePositionsMs)
+        assertEquals(93_000L, plan.stopPositionMs)
+        assertEquals(0L, plan.trimmedEndMs)
+    }
+
+    @Test
+    fun `fixed length blocks trim the smallest possible tail`() {
+        val fixed = RotationSettings(minimumSeconds = 60, maximumSeconds = 60, cueSeconds = 4)
+        val plan = RotationPlanner.create(0, 135_000, fixed)
+        assertEquals(listOf(60_000L, 60_000L), plan.danceBlocksMs)
+        assertEquals(124_000L, plan.stopPositionMs)
+        assertEquals(11_000L, plan.trimmedEndMs)
+    }
+
+    @Test
+    fun `replanning uses the remaining music and preserves absolute positions`() {
+        val plan = RotationPlanner.create(60_000, 130_000, settings)
+        assertEquals(60_000L, plan.startPositionMs)
+        assertEquals(listOf(65_000L), plan.danceBlocksMs)
+        assertEquals(125_000L, plan.stopPositionMs)
+        assertEquals(5_000L, plan.trimmedEndMs)
+    }
+
+    @Test
+    fun `too little remaining music produces an immediate stop with no cue`() {
+        val plan = RotationPlanner.create(60_000, 80_000, settings)
+        assertEquals(60_000L, plan.stopPositionMs)
+        assertEquals(20_000L, plan.trimmedEndMs)
+        assertTrue(plan.danceBlocksMs.isEmpty())
+        assertTrue(plan.cuePositionsMs.isEmpty())
+    }
+
+    @Test
+    fun `empty or reversed range does not produce negative time`() {
+        val plan = RotationPlanner.create(60_000, 30_000, settings)
+        assertEquals(60_000L, plan.startPositionMs)
+        assertEquals(60_000L, plan.stopPositionMs)
+        assertEquals(0L, plan.trimmedEndMs)
+        assertTrue(plan.danceBlocksMs.isEmpty())
+    }
+
+    @Test
+    fun `long recordings are not limited to two hundred blocks`() {
+        val plan = RotationPlanner.create(0, 6 * 60 * 60 * 1_000L, settings)
+        assertEquals(318, plan.danceBlocksMs.size)
+        assertEquals(0L, plan.trimmedEndMs)
+        assertTrue(plan.danceBlocksMs.all { it in 45_000L..65_000L })
+    }
+
+    @Test
+    fun `plans obey both limits retain the most music and prefer fewer blocks`() {
+        val configurations = listOf(
+            settings,
+            RotationSettings(minimumSeconds = 60, maximumSeconds = 60),
+            RotationSettings(minimumSeconds = 40, maximumSeconds = 50, cueSeconds = 15),
+            RotationSettings(minimumSeconds = 10, maximumSeconds = 180, cueSeconds = 1),
+            RotationSettings(minimumSeconds = 179, maximumSeconds = 180, cueSeconds = 15),
+        )
+        for (configuration in configurations) {
+            val minimum = configuration.minimumSeconds * 1_000L
+            val maximum = configuration.maximumSeconds * 1_000L
+            val cue = configuration.cueSeconds * 1_000L
+            for (seconds in 1..600) {
+                // Odd milliseconds exercise rounding close to block boundaries.
+                val duration = seconds * 1_000L + 37
+                val plan = RotationPlanner.create(0, duration, configuration)
+                val counts = 1..(duration / minimum).toInt()
+                val fullSongCount = counts.firstOrNull { count ->
+                    duration in (count * minimum + (count - 1) * cue)..
+                        (count * maximum + (count - 1) * cue)
+                }
+                val latestLegalStop = counts.mapNotNull { count ->
+                    if (count * minimum + (count - 1) * cue <= duration) {
+                        minOf(duration, count * maximum + (count - 1) * cue)
+                    } else null
+                }.maxOrNull() ?: 0L
+
+                assertEquals("duration=$duration, $configuration", latestLegalStop, plan.stopPositionMs)
+                if (fullSongCount != null) assertEquals(fullSongCount, plan.danceBlocksMs.size)
+                assertTrue(plan.danceBlocksMs.all { it in minimum..maximum })
+                assertEquals(duration - plan.stopPositionMs, plan.trimmedEndMs)
+                assertEquals(plan.stopPositionMs, plan.danceBlocksMs.sum() + plan.cuePositionsMs.size * cue)
+                var cursor = 0L
+                plan.danceBlocksMs.dropLast(1).forEachIndexed { index, block ->
+                    cursor += block
+                    assertEquals(cursor, plan.cuePositionsMs[index])
+                    cursor += cue
+                }
             }
         }
     }

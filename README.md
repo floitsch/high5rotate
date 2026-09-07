@@ -2,6 +2,8 @@
 
 ![high5rotate icon](store/assets/icon.png)
 
+Give your partner a high five, then rotate. That's the idea behind the name and the raised-hand icon with its counter-clockwise rotation arrow.
+
 high5rotate is an Android-only teaching aid for West Coast Swing classes. Arm it once for the session, then play individual songs in YouTube Music, Spotify, or another Android media-session player.
 
 While a song plays, the app:

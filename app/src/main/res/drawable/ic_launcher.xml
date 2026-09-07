@@ -7,6 +7,8 @@
     <path android:fillColor="@color/launcher_background" android:pathData="M0,0h108v108h-108z" />
     <path
         android:fillColor="@color/launcher_foreground"
-        android:pathData="M54,18A36,36 0,1 0,90 54h-10A26,26 0,1 1,72 35l-9,9h27V17l-11,11A36,36 0,0 0,54 18z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M43,35h23v7H50v8h6c9,0 14,5 14,12s-5,13 -15,13c-5,0 -10,-1 -14,-4l4,-6c3,2 6,3 10,3c5,0 8,-2 8,-6s-3,-6 -8,-6H43z" />
+        android:pathData="M81.6,81.6A39,39 0,1 0,26.4 81.6L32.8,75.2A30,30 0,1 1,75.2 75.2zM40,94l-2,-26 -24,24z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M45,58L43,36Q42.5,33 45.5,32.5Q48.5,32 49,35L52,51V32Q52,29 55,29Q58,29 58,32L58.5,53L60.5,38Q61,35 64,35Q67,35 67,38L65,54L68,45Q69,42 72,43Q75,44 75,47L72,61Q71,70 64,75V80H48V76Q43,73 40,68L32,58Q30,55 32,52Q34,49 37,52L44,59Q45,60 45,58z" />
 </vector>

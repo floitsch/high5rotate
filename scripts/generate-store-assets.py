@@ -34,7 +34,7 @@ feature = '''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" v
 <circle cx="10" cy="515" r="185" fill="#39265C"/>
 <g font-family="DejaVu Sans, sans-serif">
 <text x="92" y="190" fill="#FFB703" font-size="67" font-weight="bold">high5rotate</text>
-<text x="94" y="252" fill="#FFFFFF" font-size="31">Keep the class dancing.</text>
+<text x="94" y="252" fill="#FFFFFF" font-size="31">High five. Rotate. Keep dancing.</text>
 <text x="94" y="297" fill="#EBDDFF" font-size="25">Partner rotation cues, timed to your music.</text>
 </g>
 <g fill="#FFB703">
